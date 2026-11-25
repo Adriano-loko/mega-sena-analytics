@@ -1,0 +1,10 @@
+{
+  "name": "mega-sena-analytics",
+  "version": "1.0.0",
+  "description": "Web app de dados, estatisticas e probabilidades da Mega-Sena",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/*.test.js"
+  }
+}

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mega-Sena Analytics — Dados, Estatísticas e Probabilidades</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-badge" aria-hidden="true">MS</div>
+        <div>
+          <h1>Mega-Sena Analytics</h1>
+          <p class="subtitle">Dados históricos, estatística descritiva e cálculo exato de possibilidades</p>
+        </div>
+      </div>
+
+      <div class="data-controls">
+        <div id="dataset-badge" class="dataset-badge simulated">
+          <span class="dot"></span>
+          <span id="dataset-label">Carregando base...</span>
+        </div>
+        <div class="control-buttons">
+          <button id="btn-sync-online" class="btn btn-primary" type="button">
+            Sincronizar Sorteios Reais
+          </button>
+          <label class="btn btn-secondary file-btn">
+            Importar JSON / CSV
+            <input id="input-import-file" type="file" accept=".json,.csv,.txt" hidden />
+          </label>
+          <button id="btn-reset-baseline" class="btn btn-ghost" type="button" title="Voltar à base offline simulada">
+            Base Offline
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div id="status-banner" class="status-banner hidden" role="status" aria-live="polite"></div>
+
+    <nav class="tabs" role="tablist" aria-label="Seções de análise">
+      <button class="tab-btn active" role="tab" aria-selected="true" data-tab="overview">
+        Visão Geral &amp; Mapa 01–60
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="probabilities">
+        Possibilidades &amp; Meus Números
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="simulator">
+        Monte Carlo &amp; Gerador
+      </button>
+      <button class="tab-btn" role="tab" aria-selected="false" data-tab="history">
+        Histórico de Concursos
+      </button>
+    </nav>
+
+    <main>
+      <!-- TAB 1: VISÃO GERAL & MAPA 01-60 -->
+      <section id="tab-overview" class="tab-panel active">
+        <div class="kpi-grid" id="overview-kpis"></div>
+
+        <div class="grid-two-asym">
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2>Mapa de Calor das 60 Dezenas</h2>
+                <p class="card-desc">Clique em qualquer número para ver estatísticas detalhadas, z-score e parceiros mais frequentes.</p>
+              </div>
+              <div class="segmented" role="group" aria-label="Modo do mapa de calor">
+                <button class="seg-btn active" data-heatmap-mode="frequency" type="button">Frequência</button>
+                <button class="seg-btn" data-heatmap-mode="delay" type="button">Atraso Atual</button>
+                <button class="seg-btn" data-heatmap-mode="recent" type="button">Últimos 100</button>
+              </div>
+            </div>
+            <div id="heatmap-grid" class="heatmap-grid"></div>
+            <div class="heatmap-legend">
+              <span>Menor</span>
+              <div class="legend-scale"></div>
+              <span>Maior</span>
+            </div>
+          </article>
+
+          <article class="card" id="number-inspector-card">
+            <div class="card-header">
+              <div>
+                <h2>Raio-X da Dezena</h2>
+                <p class="card-desc">Análise individual frente à expectativa teórica (10% dos sorteios)</p>
+              </div>
+            </div>
+            <div id="number-inspector"></div>
+          </article>
+        </div>
+
+        <div class="grid-two">
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2>Pares vs Ímpares: Observado vs Teoria</h2>
+                <p class="card-desc">Comparação da distribuição real/amostral com a probabilidade hipergeométrica exata.</p>
+              </div>
+            </div>
+            <div id="chart-parity"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2>Distribuição da Soma das 6 Dezenas</h2>
+                <p class="card-desc" id="sum-summary-desc">Média teórica esperada: 183</p>
+              </div>
+            </div>
+            <div id="chart-sums"></div>
+          </article>
+        </div>
+
+        <div class="grid-three">
+          <article class="card">
+            <div class="card-header">
+              <h3>Top 12 Mais Sorteadas</h3>
+            </div>
+            <div id="chart-hottest"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Top 12 Mais Atrasadas</h3>
+            </div>
+            <div id="chart-delayed"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <h3>Duplas Mais Frequentes</h3>
+            </div>
+            <div id="chart-pairs"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- TAB 2: POSSIBILIDADES & MEUS NÚMEROS -->
+      <section id="tab-probabilities" class="tab-panel">
+        <div class="callout-info">
+          <strong>Princípio Matemático da Equiprobabilidade:</strong>
+          Em um sorteio justo da Mega-Sena, cada uma das <strong>50.063.860</strong> combinações de 6 dezenas tem exatamente a mesma chance de sair, independentemente dos concursos anteriores. Use esta seção para calcular probabilidades exatas de sair um grupo de dezenas, apostas múltiplas (6 a 20 dezenas) e horizontes de vários concursos.
+        </div>
+
+        <div class="grid-two-asym">
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2>Selecione seus Números (Volante Interativo)</h2>
+                <p class="card-desc">Escolha de 1 a 20 dezenas para calcular as possibilidades exatas de sorteio.</p>
+              </div>
+              <div class="inline-actions">
+                <button id="btn-quick-6" class="btn btn-secondary btn-sm" type="button">6 Aleatórias</button>
+                <button id="btn-quick-hot6" class="btn btn-secondary btn-sm" type="button">6 Mais Frequentes</button>
+                <button id="btn-clear-selection" class="btn btn-ghost btn-sm" type="button">Limpar</button>
+              </div>
+            </div>
+
+            <div id="selector-board" class="selector-board"></div>
+
+            <div class="selected-bar">
+              <div>
+                <span class="muted">Selecionados (<strong id="selected-count">0</strong>):</span>
+                <div id="selected-pills" class="ball-row compact"></div>
+              </div>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2>Possibilidade de Sair Estes Números</h2>
+                <p class="card-desc">Cálculo hipergeométrico exato no próximo sorteio (6 bolas entre 60).</p>
+              </div>
+            </div>
+            <div id="target-odds-panel"></div>
+          </article>
+        </div>
+
+        <div class="grid-two">
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2>Horizonte de Vários Concursos</h2>
+                <p class="card-desc">Chance de acertar <strong>ao menos 1 vez</strong> jogando em N concursos consecutivos: <code>1 - (1 - p)^N</code>.</p>
+              </div>
+            </div>
+            <div class="horizon-controls">
+              <label for="horizon-draws">Concursos seguidos (N):</label>
+              <input id="horizon-draws" type="range" min="1" max="500" value="52" />
+              <input id="horizon-draws-num" type="number" min="1" max="100000" value="52" class="num-input" />
+            </div>
+            <div id="horizon-results"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2>Simulador de Volante (6 a 20 Dezenas)</h2>
+                <p class="card-desc">Veja como marcar mais números no volante multiplica suas chances e o custo da aposta.</p>
+              </div>
+            </div>
+            <div class="ticket-controls">
+              <label for="ticket-size-slider">Dezenas no volante (<strong id="ticket-size-label">6</strong>):</label>
+              <input id="ticket-size-slider" type="range" min="6" max="20" value="6" />
+              <label for="unit-price-input">Aposta simples (R$):</label>
+              <input id="unit-price-input" type="number" min="1" step="0.5" value="5.00" class="num-input" />
+            </div>
+            <div id="ticket-odds-results"></div>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>Análise Estrutural &amp; Desempenho Histórico da Seleção</h2>
+              <p class="card-desc">Verifica características matemáticas da sua combinação e quantas vezes ela teria premiado nos concursos carregados.</p>
+            </div>
+          </div>
+          <div id="selection-history-check"></div>
+        </article>
+      </section>
+
+      <!-- TAB 3: MONTE CARLO & GERADOR -->
+      <section id="tab-simulator" class="tab-panel">
+        <div class="grid-two">
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2>Simulador de Monte Carlo</h2>
+                <p class="card-desc">Simule milhares de sorteios aleatórios equiprováveis e compare a frequência empírica com a probabilidade exata.</p>
+              </div>
+            </div>
+            <div class="sim-controls">
+              <label for="sim-iterations">Quantidade de sorteios:</label>
+              <select id="sim-iterations" class="select-input">
+                <option value="1000">1.000 sorteios</option>
+                <option value="10000" selected>10.000 sorteios</option>
+                <option value="25000">25.000 sorteios</option>
+                <option value="50000">50.000 sorteios</option>
+              </select>
+              <button id="btn-run-sim" class="btn btn-primary" type="button">Executar Simulação</button>
+            </div>
+            <p class="muted small-note">A simulação avalia automaticamente os números atualmente selecionados na aba "Possibilidades &amp; Meus Números" (ou gera um jogo de 6 dezenas se nenhum estiver selecionado).</p>
+            <div id="sim-results"></div>
+          </article>
+
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2>Gerador com Filtros Estatísticos</h2>
+                <p class="card-desc">Gere combinações respeitando restrições de paridade, faixa de soma e dezenas fixas/excluídas.</p>
+              </div>
+            </div>
+            <form id="generator-form" class="gen-form">
+              <div class="form-row">
+                <label>Tamanho do jogo
+                  <input id="gen-size" type="number" min="6" max="15" value="6" class="num-input" />
+                </label>
+                <label>Mín. pares
+                  <input id="gen-min-evens" type="number" min="0" max="15" value="2" class="num-input" />
+                </label>
+                <label>Máx. pares
+                  <input id="gen-max-evens" type="number" min="0" max="15" value="4" class="num-input" />
+                </label>
+              </div>
+              <div class="form-row">
+                <label>Soma mínima
+                  <input id="gen-min-sum" type="number" min="21" max="500" value="140" class="num-input" />
+                </label>
+                <label>Soma máxima
+                  <input id="gen-max-sum" type="number" min="21" max="600" value="230" class="num-input" />
+                </label>
+                <label>Qtd. de jogos
+                  <input id="gen-count" type="number" min="1" max="10" value="4" class="num-input" />
+                </label>
+              </div>
+              <div class="form-row full">
+                <label>Dezenas fixas (separadas por vírgula ou espaço, opcional)
+                  <input id="gen-fixed" type="text" placeholder="Ex: 05, 23" class="text-input" />
+                </label>
+              </div>
+              <div class="form-row full">
+                <label>Dezenas excluídas (opcional)
+                  <input id="gen-excluded" type="text" placeholder="Ex: 01, 60" class="text-input" />
+                </label>
+              </div>
+              <button class="btn btn-primary" type="submit">Gerar Jogos Filtrados</button>
+            </form>
+            <div id="generator-results"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- TAB 4: HISTÓRICO DE CONCURSOS -->
+      <section id="tab-history" class="tab-panel">
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2>Histórico de Concursos</h2>
+              <p class="card-desc">Pesquise por número do concurso ou filtre sorteios que contenham determinadas dezenas.</p>
+            </div>
+            <div class="history-filters">
+              <input id="history-search-concurso" type="number" placeholder="Concurso (ex: 2500)" class="text-input compact" />
+              <input id="history-search-numbers" type="text" placeholder="Contém dezenas (ex: 10 25)" class="text-input" />
+              <button id="btn-clear-history-filter" class="btn btn-ghost btn-sm" type="button">Limpar Filtros</button>
+            </div>
+          </div>
+          <div id="history-summary" class="muted small-note"></div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Concurso</th>
+                  <th>Data</th>
+                  <th>Dezenas Sorteadas</th>
+                  <th>Soma</th>
+                  <th>Pares / Ímpares</th>
+                </tr>
+              </thead>
+              <tbody id="history-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="history-pagination"></div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./src/app.js"></script>
+</body>
+</html>
