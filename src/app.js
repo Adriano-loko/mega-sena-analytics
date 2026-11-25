@@ -163,18 +163,18 @@ function renderOverview() {
 
 function heatColor(ratio) {
   const clamped = Math.max(0, Math.min(1, ratio));
-  // Interpolate deep emerald (#14382c) -> emerald (#00a86b) -> warm gold (#d99b26)
+  // Interpolate deep navy (#13284a) -> royal blue (#2563eb) -> sky blue (#0ea5e9)
   if (clamped < 0.65) {
     const t = clamped / 0.65;
-    const r = Math.round(20 + (0 - 20) * t);
-    const g = Math.round(56 + (168 - 56) * t);
-    const b = Math.round(44 + (107 - 44) * t);
+    const r = Math.round(19 + (37 - 19) * t);
+    const g = Math.round(40 + (99 - 40) * t);
+    const b = Math.round(74 + (235 - 74) * t);
     return `rgb(${r}, ${g}, ${b})`;
   }
   const t = (clamped - 0.65) / 0.35;
-  const r = Math.round(0 + (217 - 0) * t);
-  const g = Math.round(168 + (155 - 168) * t);
-  const b = Math.round(107 + (38 - 107) * t);
+  const r = Math.round(37 + (14 - 37) * t);
+  const g = Math.round(99 + (165 - 99) * t);
+  const b = Math.round(235 + (233 - 235) * t);
   return `rgb(${r}, ${g}, ${b})`;
 }
 
